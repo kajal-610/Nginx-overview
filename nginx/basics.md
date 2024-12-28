@@ -186,4 +186,79 @@ After editing the configuration, you need to reload Nginx to apply the changes:
 
 ```nginx -s reload```
 
+## Reverse Proxy with Nginx
+A reverse proxy sits between a client and a backend server, forwarding client requests to the backend and sending the backend’s response back to the client. Here’s how you configure Nginx as a reverse proxy:
+
+```
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        proxy_pass http://backend_server;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+- **proxy_pass http://backend_server;:** This tells Nginx to forward requests to the backend server.
+- **proxy_set_header Host $host;:** Ensures the correct Host header is passed to the backend.
+- **proxy_set_header X-Real-IP $remote_addr;:** Passes the client’s real IP address to the backend.
+- **proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;:** Adds the client’s IP to the X-Forwarded-For header, which is used by the backend to identify the original client IP.
+
+## Load Balancing with Nginx
+Nginx can distribute traffic among multiple backend servers to balance the load.
+
+```
+upstream backend {
+    server backend1.example.com;
+    server backend2.example.com;
+}
+
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        proxy_pass http://backend;
+    }
+}
+```
+
+- **upstream backend { ... }:** Defines a group of backend servers.
+- **server backend1.example.com;:** Adds a server to the backend group.
+- **proxy_pass http://backend;:** Forwards requests to one of the servers in the backend group.
+
+
+## Securing Nginx with SSL/TLS
+SSL/TLS encrypts the data between your server and clients. Here’s how to configure SSL in Nginx:
+
+```
+server {
+    listen 443 ssl;
+    server_name example.com;
+
+    ssl_certificate /etc/nginx/ssl/example.com.crt;
+    ssl_certificate_key /etc/nginx/ssl/example.com.key;
+
+    location / {
+        root /var/www/html;
+        index index.html;
+    }
+}
+
+server {
+    listen 80;
+    server_name example.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+- **listen 443 ssl;:** Tells Nginx to listen on port 443 (the default port for HTTPS) with SSL enabled.
+- **ssl_certificate and ssl_certificate_key:** Specifies the paths to your SSL certificate and private key.
+- **return 301 https://$host$request_uri;:** Redirects all HTTP requests to HTTPS.
+
+
 
